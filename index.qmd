@@ -751,6 +751,13 @@ server <- function(input, output, session) {
 
 shinyApp(ui, server)
 ```
+## Exercise 02
+
+![](images/hadley.gif)
+
+[funnygif](https://ifendo.shinyapps.io/funnygif){preview-link="true"}
+
+
 ## Exercise 02 - solution
 
 ```{r}
