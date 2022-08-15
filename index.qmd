@@ -1,0 +1,933 @@
+---
+title: "Shiny-advanced"
+author: "Jie Wang"
+date: "2022-08-18"
+format: 
+    revealjs:
+        incremental: true
+        scrollable: true
+        theme: dark
+        numbers: true
+        slide-number: true
+        chalkboard: true
+execute:
+    echo: true
+---
+## Outline
++ Reactive building blocks
++ Shiny Modules
++ golem framework
++ Wrap-up
+
+# Reactive building blocks
+
+## 
+There are three fundamental building blocks of reactive programming:
+
++ reactive values
++ reactive expressions
++ observers
+
+## reactive values
+Most of the reactive values you'll encounter will come from the `input` argument
+to the `server` function:
+
+```{r}
+#| eval: false
+
+library(shiny)
+ui <- fluidPage(
+    numericInput(
+        "num",
+        "Select number of values:",
+        value = 5
+    ),
+    textOutput("t1")
+)
+server <- function(input, output, session) {
+    # we can refer to input$num    
+    output$t1 <- renderText({
+        paste0("You selected ", input$num) # read-only
+    })
+}
+
+shinyApp(ui, server)
+```
+
+## reactive values - reactiveVal()
+
+```{r}
+#| eval: true
+
+library(shiny)
+reactiveConsole(TRUE)
+
+# set
+rv <- reactiveVal(10)
+
+# get
+rv()
+
+# set to another value
+rv(15)
+
+rv()
+
+```
+
+## reactive values - reactiveValues()
+```{r}
+#| eval: true
+
+library(shiny)
+reactiveConsole(TRUE)
+
+# set
+rv <- reactiveValues(x = 10, y = 15)
+
+# get
+rv$x
+rv$y
+
+# set to another value
+rv$x <- 100
+
+rv$x
+
+```
+
+## Combine `reactiveValues` and `observeEvent`
+
+```{r}
+#| eval: false
+library(shiny)
+
+ui <- fluidPage(
+    actionButton("drink", "drink me"),
+    actionButton("eat", "eat me"),
+    textOutput("notice")
+)
+
+server <- function(input, output, session) {
+    r <- reactiveValues(notice = "")
+
+    observeEvent(input$drink, {
+            r$notice <- "You are no longer thristy"
+        }
+    )
+    observeEvent(input$eat, {
+            r$notice <- "You are no longer hungry"
+        }
+    )
+    output$notice <- renderText(r$notice)
+}
+
+shinyApp(ui, server)
+```
+
+## Exercise 01
+
+```{r}
+#| eval: false
+library(shiny)
+library(ggplot2)
+library(dplyr)
+library(shinycssloaders)
+
+# a sample data frame
+data <- data.frame(
+    "category" = c('A', 'B', 'C', 'D'),
+    "amount" = c(21, 46, 27, 6)
+)
+
+ui <- fluidPage(
+    fluidRow(
+        column(
+            width = 2,
+            actionButton(
+                "bar",
+                "",
+                icon = icon("chart-bar")
+            ),
+            actionButton(
+                "pie",
+                "",
+                icon = icon("chart-pie")
+            ),
+        ),
+        column(
+            width = 10,
+            plotOutput("p1")
+        )
+    )
+)
+
+server <- function(input, output, session) {
+    # complete the server part
+}
+
+shinyApp(ui, server)
+
+```
+## Exercise 01 - solution
+
+```{r}
+#| eval: false
+
+library(shiny)
+library(shinycssloaders)
+library(dplyr)
+library(ggplot2)
+
+# a sample data frame
+data <- data.frame(
+    "category" = c("A", "B", "C", "D"),
+    "amount" = c(21, 46, 27, 6)
+)
+
+ui <- fluidPage(
+    fluidRow(
+        column(
+            width = 2,
+            actionButton(
+                "bar",
+                "",
+                icon = icon("chart-bar")
+            ),
+            actionButton(
+                "pie",
+                "",
+                icon = icon("chart-pie")
+            ),
+        ),
+        column(
+            width = 10,
+            plotOutput("p1") %>%
+            withSpinner()
+        )
+    )
+)
+
+server <- function(input, output, session) {
+    rv <- reactiveValues(
+        plot = NULL
+    )
+
+    # bar chart
+    observeEvent(input$bar, {
+        rv$plot <- ggplot(data, aes(x = category, y = amount, fill = category)) +
+            geom_bar(stat = "identity")
+    })
+
+    # pie chart
+    observeEvent(input$pie, {
+        rv$plot <- ggplot(data, aes(x = "", y = amount, fill = category)) +
+            geom_bar(stat = "identity", width = 1) +
+            coord_polar("y", start = 0)
+    })
+
+    output$p1 <- renderPlot({
+        rv$plot
+    })
+}
+
+shinyApp(ui, server)
+
+```
+
+
+## Exercise 02
+
+
+```{r}
+#| eval: false
+library(shiny)
+
+ui <- fillPage(
+    plotOutput("plot", click = "click", height = "100%")
+)
+
+# Assignment: This app doesn't work! It's supposed to let
+# the user click on the plot, and have a data point appear
+# where the click occurs. But as written, the data point
+# only appears for a moment before disappearing.
+# 
+# This happens because each time the plot is re-rendered,
+# the value of input$click is reset to NULL, and thus
+# userPoint() becomes NULL as well.
+# 
+# Can you get a single user-added data point to stay?
+# 
+# Bonus points: Can you include not just the single most
+# recent click, but ALL clicks made by the user?
+# 
+# Hint: You'll need to replace reactive() with a combo
+# of reactiveValues() and observeEvent().
+
+server <- function(input, output, session) {
+    # Either NULL, or a 1-row data frame that represents
+    # the point that the user clicked on the plot
+    userPoint <- reactive({
+    # input$click will be either NULL or list(x=num, y=num)
+    click <- input$click
+    
+    if (is.null(click)) {
+        # The user didn't click on the plot (or the previous
+        # click was cleared by the plot being re-rendered)
+        return(NULL)
+    }
+    
+    data.frame(speed = click$x, dist = click$y)
+    })
+    
+    output$plot <- renderPlot({
+        # Before plotting, combine the original dataset with
+        # the user data. (rbind ignores NULL args.)
+        df <- rbind(cars, userPoint())
+        plot(df, pch = 19)
+        
+        model <- lm(dist ~ speed, df)
+        abline(model)
+    })
+}
+
+shinyApp(ui, server)
+
+```
+
+## Exercise 02 - solution a
+
+```{r}
+#| eval: false
+library(shiny)
+
+ui <- fillPage(
+    plotOutput("plot", click = "click", height = "100%")
+)
+
+server <- function(input, output, session) {
+    # Instead of a reactive expression for userPoint, we
+    # use a reactive value. This gives us more control
+    # over when userPoint gets updated.
+    rv <- reactiveValues(userPoint = NULL)
+
+    observeEvent(input$click, {
+        # Replace rv$userPoint, but only if input$click isn't NULL
+        if (!is.null(input$click)) {
+            rv$userPoint <- data.frame(
+                speed = input$click$x,
+                dist = input$click$y
+            )
+        }
+    })
+
+    output$plot <- renderPlot({
+        # Now refers to rv$userPoint instead of userPoint().
+        df <- rbind(cars, rv$userPoint)
+        plot(df, pch = 19)
+
+        model <- lm(dist ~ speed, df)
+        abline(model)
+    })
+}
+
+shinyApp(ui, server)
+```
+
+## Exercise 02 - solution b
+
+```{r}
+#| eval: false
+library(shiny)
+
+ui <- fillPage(
+    plotOutput("plot", click = "click", height = "100%")
+)
+
+server <- function(input, output, session) {
+    rv <- reactiveValues(userPoints = NULL)
+
+    # Same as Solution_05a.R, but instead of keeping
+    # track of the single most recent point, we accumulate
+    # all previous points using rbind().
+    observeEvent(input$click, {
+        if (!is.null(input$click)) {
+            thisPoint <- data.frame(
+                speed = input$click$x,
+                dist = input$click$y
+            )
+            rv$userPoints <- rbind(rv$userPoints, thisPoint)
+        }
+    })
+
+    output$plot <- renderPlot({
+        df <- rbind(cars, rv$userPoints)
+        plot(df, pch = 19)
+
+        model <- lm(dist ~ speed, df)
+        abline(model)
+    })
+}
+
+shinyApp(ui, server)
+```
+
+
+## Reactive expressions
+
+those are examples of a "reactive conductor" as they exist in between sources (e.g. an input) and endpoints (e.g. an output).
+
+As such a `reactive()` depends on various upstream inputs and can be used to generate output.
+
+Their primary use is similar to a function in an R script, they help to
+
++ avoid repeating yourself
+
++ decompose complex computations into smaller / more modular steps
+
++ can improve computational efficiency by breaking up / simplifying reactive dependencies
+
+## Reactive expressions - example
+
+```{r}
+#| eval: false
+library(shiny)
+
+ui <- fluidPage(
+    numericInput(
+        "nsamples",
+        "# of samples",
+        value = 10
+    ),
+    verbatimTextOutput("s1"),
+    plotOutput("p1")
+)
+server <- function(input, output, session) {
+    output$s1 <- renderPrint({
+        summary(rnorm(input$nsamples))
+    })
+
+    output$p1 <- renderPlot({
+        hist(rnorm(input$nsamples))
+    })
+}
+shinyApp(ui, server)
+```
+
+
+## Reactive expressions - example
+
+What is the problem if we don't use the `reactive()` here?
+```{r}
+#| eval: false
+library(shiny)
+
+ui <- fluidPage(
+    numericInput(
+        "nsamples",
+        "# of samples",
+        value = 10
+    ),
+    verbatimTextOutput("s1"),
+    plotOutput("p1")
+)
+server <- function(input, output, session) {
+    samples <- reactive(rnorm(input$nsamples))
+    output$s1 <- renderPrint({
+        summary(samples())
+    })
+
+    output$p1 <- renderPlot({
+        hist(samples())
+    })
+}
+shinyApp(ui, server)
+
+```
+## Reactive expressions - continued
+
+A reactive has two important properties: 
+
+:::{.nonincremental}
++ it is lazy
++ it is cached
+:::
+
+This means that it only does work when it's actually needed, and if called twice in a row, it returns the previous value.
+
+## Observers and outputs
+Observers and outputs differ from **`reactive expressions`** in two important ways:
+
+::: {.nonincremental}
++ They are eager and forgetful - they run as soon as they possibly can and they don't remember their previous action
++ The value returned by an observer is ignored, they are designed to work with functions called for their side-effects
+:::
+
+Observers and outputs are powered by the same underlying tool: **`observe()`**. This sets up a block of code that is run every time one of the reactive values or expressions it uses is updated.
+
+## Observers and outputs - continued
+
+**observe()** also powers reactive outputs. Reactive outputs are a special type of observers that have two important properties:
+
++ They are defined when you assign them into `output`, e.g. `output$p1`
++ They have some limited ability to detect when they are not visible (e.g. non-active tab)
+
+# Shiny modules
+
+## What are Shiny Modules?
+At the simplest level, a module is a pair of UI and server functions.
+
+A piece of a shiny app, that runs inside a shiny application and can represent input, output or both
+
+
+![](images/shiny-module.png)
+
+## Why would you use modules?
+
+:::{.nonincremental}
++ Create smaller components of a shiny app that can easily be reused in the same app or in other applications
++ Break up complicated apps for easier reasoning & debugging
+:::
+
+<https://shiny.rstudio.com/articles/modules.html>
+
+## 
+:::{.nonincremental}
+Shiny modules have two big advantages:
+
++ namespacing makes it easier to understand how your app works because you can write, analyse, and test individual components in isolation
++ because modules are functions they help you reuse code; anything you can do with a function, you can do with a module.
+:::
+
+## Shiny module simple example - pre
+
+```{r}
+#| eval: false
+
+library(shiny)
+ui <- fluidPage(
+    selectInput("var", "Variable", names(mtcars)),
+    numericInput("bins", "bins", 10, min = 1),
+    plotOutput("hist")
+)
+server <- function(input, output, session){
+    data <- reactive(mtcars[[input$var]])
+    output$hist <- renderPlot({
+        hist(data(), breaks = input$bins, main = input$var)
+    }, res = 96)
+}
+shinyApp(ui, server)
+```
+
+## Shiny module simple example
+
+```{r}
+#| eval: false
+library(shiny)
+
+histUI <- function(id){
+    ns <- NS(id)
+    tagList(
+        selectInput(ns("var"), "Variable", choices = names(mtcars)),
+        numericInput(ns("bins"), "bins", value = 10, min = 1),
+        plotOutput(ns("hist"))
+    )
+}
+
+histServer <- function(id) {
+    moduleServer(id, function(input, output, session) {
+        data <- reactive(mtcars[[input$var]])
+        output$hist <- renderPlot({
+            hist(data(), breaks = input$bins, main = input$var)
+        }, res = 96)
+    })
+}
+
+ui <- fluidPage(
+    histUI("hist1")
+)
+server <- function(input, output, session) {
+    histServer("hist1")
+}
+shinyApp(ui, server)
+```
+
+## Namespacing
+
+The key idea that makes modules work is that the name of each control is now determined by two pieces:
+
+::: {.nonincremental}
++ The first piece comes from the module **user**, the developer who calls `histUI()`
++ The second piece comes from the module **author**, the developer who wrote `histUI()`
+:::
+
+::::{.columns}
+
+:::{.column width="50%"}
+```{.r}
+# e.g. 
+# plotOutput(NS(id, "hist"))
+id <- "hist1"
+chk <- NS(id, "hist")
+chk
+```
+:::
+
+:::{.column width="50%"}
+```{.r}
+# e.g.
+# plotOutput(ns("hist"))
+id <- "hist1"
+ns <- NS(id)
+ns("hist")
+ns("nice")
+```
+:::
+
+::::
+
+## Exercise 01
+
+```{r}
+#| eval: false
+
+library(shiny)
+
+counterButton <- function(id, label = "Counter") {
+    # complete the module UI part
+    actionButton("button"), label = label),
+    verbatimTextOutput("out")
+}
+
+counterServer <- function(id) {
+    # complete the module server part
+    moduleServer(
+        id,
+        function(input, output, session) {
+            count <- reactiveVal(0)
+            observeEvent(input$button, {
+                count(count() + 1)
+            })
+        }
+    )
+}
+
+ui <- fluidPage(
+    counterButton("counter1", "Counter #1"),
+)
+
+server <- function(input, output, session) {
+    counterServer("counter1")
+}
+
+shinyApp(ui, server)
+```
+
+## Exercise 01 - solution
+
+```{r}
+#| eval: false
+
+library(shiny)
+
+counterButton <- function(id, label = "Counter") {
+    ns <- NS(id)
+    tagList(
+        actionButton(ns("button"), label = label),
+        verbatimTextOutput(ns("out"))
+    )
+}
+
+counterServer <- function(id) {
+    moduleServer(
+        id,
+        function(input, output, session) {
+            count <- reactiveVal(0)
+            observeEvent(input$button, {
+                count(count() + 1)
+            })
+            output$out <- renderText({
+                count()
+            })
+            count
+        }
+    )
+}
+
+ui <- fluidPage(
+    counterButton("counter1", "Counter #1"),
+    hr(),
+    counterButton("counter2", "Counter #2"),
+    hr(),
+    counterButton("counter3", "Counter #3"),
+)
+
+server <- function(input, output, session) {
+    counterServer("counter1")
+    counterServer("counter2")
+    counterServer("counter3")
+}
+
+shinyApp(ui, server)
+```
+
+## Exercise 02
+
+```{r}
+#| eval: false
+
+library(shiny)
+library(dplyr)
+
+countButtonUI <- function(id) {
+    ns <- NS(id)
+    tagList(
+        fluidRow(
+            column(
+                width = 12,
+                actionButton(ns("like"), label = "Like: ", icon = icon("thumbs-up"), class = "primary"),
+                actionButton(ns("dislike"), label = "Dislike: ", icon = icon("thumbs-down"), class = "primary")
+            )
+        ),
+        fluidRow(
+            column(
+                width = 12,
+                imageOutput(ns("myImage"))
+            ),
+        )
+    )
+}
+
+countButtonServer <- function(id, image) {
+    moduleServer(
+        id,
+        function(input, output, session) {
+            like_count <- reactiveVal(0)
+            observe({
+                like_count(like_count() + 1)
+            }) %>%
+                bindEvent(input$like)
+
+            dislike_count <- reactiveVal(0)
+            observe({
+                dislike_count(dislike_count() + 1)
+            }) %>%
+                bindEvent(input$dislike)
+
+            output$myImage <- renderImage(
+                {
+                    list(
+                        src = image,
+                        height = "60%",
+                        alt = "A pic"
+                    )
+                },
+                deleteFile = FALSE
+            )
+
+            observe({
+                updateActionButton(
+                    inputId = "like", label = paste0("Like: ", like_count()),
+                )
+
+                updateActionButton(
+                    inputId = "dislike", label = paste0("Dislike: ", dislike_count()),
+                )
+            })
+        }
+    )
+}
+
+ui <- fluidPage(
+    countButtonUI("count1"),
+    # add some more gifs
+)
+
+server <- function(input, output, session) {
+    countButtonServer("count1", image = "hadley.gif")
+    # add some more gifs
+
+}
+
+shinyApp(ui, server)
+```
+## Exercise 02 - solution
+
+```{r}
+#| eval: false
+
+library(shiny)
+library(dplyr)
+
+countButtonUI <- function(id) {
+    ns <- NS(id)
+    tagList(
+        fluidRow(
+            column(
+                width = 12,
+                actionButton(ns("like"), label = "Like: ", icon = icon("thumbs-up"), class = "primary"),
+                actionButton(ns("dislike"), label = "Dislike: ", icon = icon("thumbs-down"), class = "primary")
+            )
+        ),
+        fluidRow(
+            column(
+                width = 12,
+                imageOutput(ns("myImage"))
+            ),
+        )
+    )
+}
+
+countButtonServer <- function(id, image) {
+    moduleServer(
+        id,
+        function(input, output, session) {
+            like_count <- reactiveVal(0)
+            observe({
+                like_count(like_count() + 1)
+            }) %>%
+                bindEvent(input$like)
+
+            dislike_count <- reactiveVal(0)
+            observe({
+                dislike_count(dislike_count() + 1)
+            }) %>%
+                bindEvent(input$dislike)
+
+            output$myImage <- renderImage(
+                {
+                    list(
+                        src = image,
+                        height = "60%",
+                        alt = "A pic"
+                    )
+                },
+                deleteFile = FALSE
+            )
+
+            observe({
+                updateActionButton(
+                    inputId = "like", label = paste0("Like: ", like_count()),
+                )
+
+                updateActionButton(
+                    inputId = "dislike", label = paste0("Dislike: ", dislike_count()),
+                )
+            })
+        }
+    )
+}
+
+ui <- fluidPage(
+    countButtonUI("count1"),
+    hr(),
+    countButtonUI("count2"),
+    hr(),
+    countButtonUI("count3"),
+    hr(),
+    countButtonUI("count4")
+)
+
+server <- function(input, output, session) {
+    countButtonServer("count1", image = "hadley.gif")
+    countButtonServer("count2", image = "css.gif")
+    countButtonServer("count3", image = "programming.gif")
+    countButtonServer("count4", image = "refactoring-cat.gif")
+}
+
+shinyApp(ui, server)
+```
+
+
+## Shiny Module examples
+
+**Mastering-shiny** Chapter 19
+
+Section 19.3.6:
+
+<https://ifendo.shinyapps.io/histogramApp/>
+
+Section 19.4.3:
+
+<https://ifendo.shinyapps.io/dynamic_ui/>
+
+## Some more shiny module resources
++ [Using Shiny Modules Tutorial](https://rstudio.com/resources/shiny-dev-con/modules/)
++ [Effective Use of Shiny Modules](https://rstudio.com/resources/rstudioconf-2019/effective-use-of-shiny-modules-in-application-development/)
++ [Modularizing Shiny app code](https://shiny.rstudio.com/articles/modules.html)
+
+# golem framework
+
+## Packages
+
+If you are creating a large or long-term Shiny app, I highly recommend that you organise your app in the same way as an R package. This means:
+
+:::{.nonincremental}
++ Put all R code in the `R/` directory
++ Write a function that starts your app
++ Create a `DESCRIPTION` file in the root directory of your app
+:::
+
+> Hadly, Mastering-Shiny Chapter 20
+
+## golem framework
+::::{.columns}
+
+:::{.column width="50%"}
+R package:
+<https://github.com/ThinkR-open/golem>
+![golem](images/golem.png)
+:::
+
+:::{.column width="50%"}
+Engineering Production-Grade Shiny Apps:
+<https://engineering-shiny.org/>
+![book](images/engineering-shiny.jpeg)
+:::
+::::
+
+## golem examples - 1
+
+<https://github.com/Biogen-Inc/tidyCDISC>
+
+![](images/tidyCDISC.png){.r-stretch}
+
+<https://biogen-inc.github.io/tidyCDISC/>
+
+<https://rinpharma.shinyapps.io/tidyCDISC/>
+
+## golem examples - 2
+
+3rd Annual Shiny Contest Grand prizes
+
+<https://github.com/ThinkR-open/wedding>
+
+![](images/wedding-modules.png)
+
+<https://www.rstudio.com/blog/winners-of-the-3rd-annual-shiny-contest/>
+
+## hands-on practice
+
+:::{.r-fit-text}
+tidyCDISCmini
+:::
+
+## Wrap-up
+
+Shiny in clinical trials: 
+
++ Biogen: <https://rinpharma.shinyapps.io/tidyCDISC/>
+
++ Roche: <https://genentech.shinyapps.io/teal_efficacy/>
+
++ Anonymous: <https://realtimeclinical.shinyapps.io/rsum/>
+
++ Janssen: Baseline framework
+
+## Reference
+
+<https://www.rstudio.com/resources/shiny-dev-con/reactivity-pt-1-joe-cheng/>
+
+<https://www.rstudio.com/resources/shiny-dev-con/reactivity-pt-2/>
+
+<https://mastering-shiny.org/index.html>
