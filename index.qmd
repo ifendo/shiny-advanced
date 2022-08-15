@@ -919,9 +919,9 @@ Engineering Production-Grade Shiny Apps:
 tidyCDISCmini
 :::
 
-## Wrap-up
+# Wrap-up
 
-Shiny in clinical trials: 
+## Shiny in clinical trials: 
 
 + Biogen: <https://rinpharma.shinyapps.io/tidyCDISC/>
 
@@ -938,3 +938,7 @@ Shiny in clinical trials:
 <https://www.rstudio.com/resources/shiny-dev-con/reactivity-pt-2/>
 
 <https://mastering-shiny.org/index.html>
+
+<https://r4ds.had.co.nz/index.html>
+
+<https://adv-r.hadley.nz/>
