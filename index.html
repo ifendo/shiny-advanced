@@ -766,7 +766,7 @@
 <ul>
 <li class="fragment"><p>avoid repeating yourself</p></li>
 <li class="fragment"><p>decompose complex computations into smaller / more modular steps</p></li>
-<li class="fragment"><p>can improve computational efficiency by breaking up / simplifying reactive dependencies</p></li>
+<li class="fragment"><p>improve computational efficiency by breaking up / simplifying reactive dependencies</p></li>
 </ul>
 </section>
 <section id="reactive-expressions---example" class="slide level2">
@@ -1019,26 +1019,25 @@
 <span id="cb25-19"><a href="#cb25-19"></a>            output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderText</span>({</span>
 <span id="cb25-20"><a href="#cb25-20"></a>                <span class="fu">count</span>()</span>
 <span id="cb25-21"><a href="#cb25-21"></a>            })</span>
-<span id="cb25-22"><a href="#cb25-22"></a>            count</span>
-<span id="cb25-23"><a href="#cb25-23"></a>        }</span>
-<span id="cb25-24"><a href="#cb25-24"></a>    )</span>
-<span id="cb25-25"><a href="#cb25-25"></a>}</span>
-<span id="cb25-26"><a href="#cb25-26"></a></span>
-<span id="cb25-27"><a href="#cb25-27"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
-<span id="cb25-28"><a href="#cb25-28"></a>    <span class="fu">counterButton</span>(<span class="st">"counter1"</span>, <span class="st">"Counter #1"</span>),</span>
-<span id="cb25-29"><a href="#cb25-29"></a>    <span class="fu">hr</span>(),</span>
-<span id="cb25-30"><a href="#cb25-30"></a>    <span class="fu">counterButton</span>(<span class="st">"counter2"</span>, <span class="st">"Counter #2"</span>),</span>
-<span id="cb25-31"><a href="#cb25-31"></a>    <span class="fu">hr</span>(),</span>
-<span id="cb25-32"><a href="#cb25-32"></a>    <span class="fu">counterButton</span>(<span class="st">"counter3"</span>, <span class="st">"Counter #3"</span>),</span>
-<span id="cb25-33"><a href="#cb25-33"></a>)</span>
-<span id="cb25-34"><a href="#cb25-34"></a></span>
-<span id="cb25-35"><a href="#cb25-35"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
-<span id="cb25-36"><a href="#cb25-36"></a>    <span class="fu">counterServer</span>(<span class="st">"counter1"</span>)</span>
-<span id="cb25-37"><a href="#cb25-37"></a>    <span class="fu">counterServer</span>(<span class="st">"counter2"</span>)</span>
-<span id="cb25-38"><a href="#cb25-38"></a>    <span class="fu">counterServer</span>(<span class="st">"counter3"</span>)</span>
-<span id="cb25-39"><a href="#cb25-39"></a>}</span>
-<span id="cb25-40"><a href="#cb25-40"></a></span>
-<span id="cb25-41"><a href="#cb25-41"></a><span class="fu">shinyApp</span>(ui, server)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb25-22"><a href="#cb25-22"></a>        }</span>
+<span id="cb25-23"><a href="#cb25-23"></a>    )</span>
+<span id="cb25-24"><a href="#cb25-24"></a>}</span>
+<span id="cb25-25"><a href="#cb25-25"></a></span>
+<span id="cb25-26"><a href="#cb25-26"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb25-27"><a href="#cb25-27"></a>    <span class="fu">counterButton</span>(<span class="st">"counter1"</span>, <span class="st">"Counter #1"</span>),</span>
+<span id="cb25-28"><a href="#cb25-28"></a>    <span class="fu">hr</span>(),</span>
+<span id="cb25-29"><a href="#cb25-29"></a>    <span class="fu">counterButton</span>(<span class="st">"counter2"</span>, <span class="st">"Counter #2"</span>),</span>
+<span id="cb25-30"><a href="#cb25-30"></a>    <span class="fu">hr</span>(),</span>
+<span id="cb25-31"><a href="#cb25-31"></a>    <span class="fu">counterButton</span>(<span class="st">"counter3"</span>, <span class="st">"Counter #3"</span>),</span>
+<span id="cb25-32"><a href="#cb25-32"></a>)</span>
+<span id="cb25-33"><a href="#cb25-33"></a></span>
+<span id="cb25-34"><a href="#cb25-34"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb25-35"><a href="#cb25-35"></a>    <span class="fu">counterServer</span>(<span class="st">"counter1"</span>)</span>
+<span id="cb25-36"><a href="#cb25-36"></a>    <span class="fu">counterServer</span>(<span class="st">"counter2"</span>)</span>
+<span id="cb25-37"><a href="#cb25-37"></a>    <span class="fu">counterServer</span>(<span class="st">"counter3"</span>)</span>
+<span id="cb25-38"><a href="#cb25-38"></a>}</span>
+<span id="cb25-39"><a href="#cb25-39"></a></span>
+<span id="cb25-40"><a href="#cb25-40"></a><span class="fu">shinyApp</span>(ui, server)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="exercise-02-1" class="slide level2">
@@ -1242,7 +1241,7 @@
 </ul>
 </div>
 <blockquote>
-<p>Hadly, Mastering-Shiny Chapter 20</p>
+<p>Hadley, Mastering-Shiny Chapter 20</p>
 </blockquote>
 </section>
 <section id="golem-framework-1" class="slide level2">

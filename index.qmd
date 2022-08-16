@@ -385,7 +385,7 @@ Their primary use is similar to a function in an R script, they help to
 
 + decompose complex computations into smaller / more modular steps
 
-+ can improve computational efficiency by breaking up / simplifying reactive dependencies
++ improve computational efficiency by breaking up / simplifying reactive dependencies
 
 ## Reactive expressions - example
 
@@ -649,7 +649,6 @@ counterServer <- function(id) {
             output$out <- renderText({
                 count()
             })
-            count
         }
     )
 }
@@ -875,7 +874,7 @@ If you are creating a large or long-term Shiny app, I highly recommend that you 
 + Create a `DESCRIPTION` file in the root directory of your app
 :::
 
-> Hadly, Mastering-Shiny Chapter 20
+> Hadley, Mastering-Shiny Chapter 20
 
 ## golem framework
 ::::{.columns}
