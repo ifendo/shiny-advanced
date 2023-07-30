@@ -1,7 +1,7 @@
 ---
 title: "Shiny-advanced"
 author: "Jie Wang"
-date: "2022-08-18"
+date: "2023-08-03"
 format: 
     revealjs:
         incremental: true
@@ -45,7 +45,7 @@ ui <- fluidPage(
     textOutput("t1")
 )
 server <- function(input, output, session) {
-    # we can refer to input$num    
+    # we can refer to input$num
     output$t1 <- renderText({
         paste0("You selected ", input$num) # read-only
     })
@@ -112,13 +112,11 @@ server <- function(input, output, session) {
     r <- reactiveValues(notice = "")
 
     observeEvent(input$drink, {
-            r$notice <- "You are no longer thristy"
-        }
-    )
+        r$notice <- "You are no longer thristy"
+    })
     observeEvent(input$eat, {
-            r$notice <- "You are no longer hungry"
-        }
-    )
+        r$notice <- "You are no longer hungry"
+    })
     output$notice <- renderText(r$notice)
 }
 
@@ -203,7 +201,7 @@ ui <- fluidPage(
         column(
             width = 10,
             plotOutput("p1") %>%
-            withSpinner()
+                withSpinner()
         )
     )
 )
@@ -251,16 +249,16 @@ ui <- fillPage(
 # the user click on the plot, and have a data point appear
 # where the click occurs. But as written, the data point
 # only appears for a moment before disappearing.
-# 
+#
 # This happens because each time the plot is re-rendered,
 # the value of input$click is reset to NULL, and thus
 # userPoint() becomes NULL as well.
-# 
+#
 # Can you get a single user-added data point to stay?
-# 
+#
 # Bonus points: Can you include not just the single most
 # recent click, but ALL clicks made by the user?
-# 
+#
 # Hint: You'll need to replace reactive() with a combo
 # of reactiveValues() and observeEvent().
 
@@ -268,24 +266,24 @@ server <- function(input, output, session) {
     # Either NULL, or a 1-row data frame that represents
     # the point that the user clicked on the plot
     userPoint <- reactive({
-    # input$click will be either NULL or list(x=num, y=num)
-    click <- input$click
-    
-    if (is.null(click)) {
-        # The user didn't click on the plot (or the previous
-        # click was cleared by the plot being re-rendered)
-        return(NULL)
-    }
-    
-    data.frame(speed = click$x, dist = click$y)
+        # input$click will be either NULL or list(x=num, y=num)
+        click <- input$click
+
+        if (is.null(click)) {
+            # The user didn't click on the plot (or the previous
+            # click was cleared by the plot being re-rendered)
+            return(NULL)
+        }
+
+        data.frame(speed = click$x, dist = click$y)
     })
-    
+
     output$plot <- renderPlot({
         # Before plotting, combine the original dataset with
         # the user data. (rbind ignores NULL args.)
         df <- rbind(cars, userPoint())
         plot(df, pch = 19)
-        
+
         model <- lm(dist ~ speed, df)
         abline(model)
     })
@@ -510,11 +508,14 @@ ui <- fluidPage(
     numericInput("bins", "bins", 10, min = 1),
     plotOutput("hist")
 )
-server <- function(input, output, session){
+server <- function(input, output, session) {
     data <- reactive(mtcars[[input$var]])
-    output$hist <- renderPlot({
-        hist(data(), breaks = input$bins, main = input$var)
-    }, res = 96)
+    output$hist <- renderPlot(
+        {
+            hist(data(), breaks = input$bins, main = input$var)
+        },
+        res = 96
+    )
 }
 shinyApp(ui, server)
 ```
@@ -525,7 +526,7 @@ shinyApp(ui, server)
 #| eval: false
 library(shiny)
 
-histUI <- function(id){
+histUI <- function(id) {
     ns <- NS(id)
     tagList(
         selectInput(ns("var"), "Variable", choices = names(mtcars)),
@@ -537,9 +538,12 @@ histUI <- function(id){
 histServer <- function(id) {
     moduleServer(id, function(input, output, session) {
         data <- reactive(mtcars[[input$var]])
-        output$hist <- renderPlot({
-            hist(data(), breaks = input$bins, main = input$var)
-        }, res = 96)
+        output$hist <- renderPlot(
+            {
+                hist(data(), breaks = input$bins, main = input$var)
+            },
+            res = 96
+        )
     })
 }
 
@@ -924,11 +928,22 @@ tidyCDISCmini
 
 + Biogen: <https://rinpharma.shinyapps.io/tidyCDISC/>
 
-+ Roche: <https://genentech.shinyapps.io/teal_efficacy/>
++ Roche: 
+    + <https://github.com/insightsengineering/teal.modules.clinical>
+    + <https://insightsengineering.github.io/teal.gallery/>
+    + <https://genentech.shinyapps.io/teal_efficacy/>
 
 + Anonymous: <https://realtimeclinical.shinyapps.io/rsum/>
 
 + Janssen: Baseline framework
+
+## Shiny for Python
+
++ [GitHub](https://github.com/rstudio/py-shiny/)
++ [Official site](https://shiny.posit.co/py/)
++ [Why Shiny for Python](https://posit.co/blog/why-shiny-for-python/)
++ [The past and future of Shiny](https://posit.co/keynotes/the-past-and-future-of-shiny/)
+
 
 ## Reference
 
@@ -941,3 +956,13 @@ tidyCDISCmini
 <https://r4ds.had.co.nz/index.html>
 
 <https://adv-r.hadley.nz/>
+
+## RStudio::conf 2022 Shiny Workshop
+
+[shiny-prod-apps](https://github.com/rstudio-conf-2022/shiny-prod-apps)
+
+## webR & golemWebR
+
++ [webr](https://github.com/r-wasm/webr/)
+
++ [golemWebR](https://github.com/DivadNojnarg/golemWebR/tree/main)
